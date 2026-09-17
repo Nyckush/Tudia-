@@ -79,8 +79,7 @@ export default function InvitadosPage() {
     <NavbarPrivado>
     <main className="p-4 sm:p-8">
       <div className="mx-auto max-w-2xl">
-        <button onClick={() => router.back()} className="text-sm text-slate-600">← Volver</button>
-        <div className="mt-5 flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">Confirmaciones</h1>
             <p className="mt-1 text-sm text-slate-600">Personas que respondieron a la invitación pública del evento.</p>

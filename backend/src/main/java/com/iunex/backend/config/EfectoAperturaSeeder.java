@@ -28,8 +28,8 @@ public class EfectoAperturaSeeder implements CommandLineRunner {
     public void run(String... args) {
         crearSiNoExiste("globos-explosion", "Explosión de globos", "Cuatro explosiones de globos de colores.", Map.of("cantidadExplosiones", 4, "particulasPorExplosion", 25, "duracionMs", 2600));
         crearSiNoExiste("fuegos-artificiales", "Fuegos artificiales", "Cuatro estallidos radiales de chispas luminosas.", Map.of("cantidadExplosiones", 4, "particulasPorExplosion", 78, "duracionMs", 1800));
-        crearSiNoExiste("lluvia-estrellas", "Lluvia de estrellas", "Estrellas blancas brillantes que caen suavemente.", Map.of("cantidadExplosiones", 4, "cantidadEstrellas", 17, "duracionMs", 3100));
         crearSiNoExiste("confeti", "Confeti de colores", "Cuatro ráfagas de confeti multicolor.", Map.of("cantidadExplosiones", 4, "particulasPorExplosion", 28, "duracionMs", 1800));
+        desactivarSiExiste("lluvia-estrellas");
     }
 
     private void crearSiNoExiste(String clave, String nombre, String descripcion, Map<String, Object> configuracionBase) {
@@ -43,5 +43,14 @@ public class EfectoAperturaSeeder implements CommandLineRunner {
         efecto.setActivo(true);
         efectoAperturaRepository.save(efecto);
         LOGGER.info("Efecto de apertura '{}' creado correctamente.", nombre);
+    }
+
+    private void desactivarSiExiste(String clave) {
+        efectoAperturaRepository.findByClave(clave).ifPresent(efecto -> {
+            if (!efecto.isActivo()) return;
+            efecto.setActivo(false);
+            efectoAperturaRepository.save(efecto);
+            LOGGER.info("El efecto de apertura '{}' fue trasladado a los efectos de fondo.", efecto.getNombre());
+        });
     }
 }

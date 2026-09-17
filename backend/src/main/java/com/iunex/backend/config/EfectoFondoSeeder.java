@@ -28,6 +28,7 @@ public class EfectoFondoSeeder implements CommandLineRunner {
     public void run(String... args) {
         crearSiNoExiste("globos", "Globos de colores", "Globos pequeños y translúcidos que flotan suavemente.", Map.of("duracionMs", 4000, "opacidadMaxima", 0.38, "tamano", "pequeno"));
         crearSiNoExiste("estrellas-fugaces", "Estrellas fugaces", "Destellos que recorren el fondo en diagonal.", Map.of("duracionMs", 4800, "cantidad", 3, "direccion", "diagonal"));
+        crearSiNoExiste("lluvia-estrellas", "Lluvia de estrellas", "Estrellas blancas brillantes que caen suavemente como efecto ambiental.", Map.of("duracionMs", 5800, "cantidad", 17, "color", "#ffffff"));
         crearSiNoExiste("estrellas-doradas", "Estrellas doradas", "Estrellas doradas flotando con un brillo sutil.", Map.of("duracionMs", 4000, "cantidad", 7, "color", "#fbbf24"));
         crearSiNoExiste("puntos-de-luz", "Puntos de luz", "Pequeños puntos luminosos con aparición gradual.", Map.of("duracionMs", 4500, "cantidad", 7, "brillo", "suave"));
     }

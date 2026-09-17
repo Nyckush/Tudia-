@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Menu, Palette, Trash2, Users } from "lucide-react";
+import { CalendarDays, Clock3, Copy, MapPin, Menu, Palette, Trash2, Users } from "lucide-react";
 import { NavbarPrivado } from "../components/NavbarPrivado";
 
 const API_URL = "/api/backend";
@@ -96,14 +96,18 @@ export default function DashboardPage() {
           {error && <p className="mt-5 text-sm text-red-700">{error}</p>}
           {!cargandoEventos && !error && eventos.length === 0 && <p className="mt-5 rounded border border-slate-200 bg-white p-4 text-sm text-slate-600">Todavía no creaste eventos.</p>}
           <ul className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {eventos.map((evento) => (
+            {eventos.map((evento) => {
+              const fechaEvento = new Date(evento.fechaHoraEvento);
+              const fecha = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" }).format(fechaEvento);
+              const hora = new Intl.DateTimeFormat("es-AR", { timeStyle: "short" }).format(fechaEvento);
+              return (
               <li key={evento.id} className="relative flex min-h-72 flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{evento.estado}</p>
                   <h3 className="mt-2 text-lg font-semibold text-slate-900">Cumpleaños de {evento.nombreCumpleanero}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{new Intl.DateTimeFormat("es-AR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(evento.fechaHoraEvento))}</p>
-                  <p className="text-sm leading-6 text-slate-600">{evento.nombreLugar}</p>
+                  <div className="mt-3 space-y-1.5 text-sm leading-6 text-slate-600"><p className="flex items-center gap-2"><CalendarDays size={16} className="text-slate-500" />{fecha}</p><p className="flex items-center gap-2"><Clock3 size={16} className="text-slate-500" />{hora} hs</p></div>
+                  <p className="mt-1.5 flex items-center gap-2 text-sm leading-6 text-slate-600"><MapPin size={16} className="shrink-0 text-slate-500" />{evento.nombreLugar}</p>
                   </div>
                   <div className="relative shrink-0">
                     <button
@@ -146,7 +150,8 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       </div>

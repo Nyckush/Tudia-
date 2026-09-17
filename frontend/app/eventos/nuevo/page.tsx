@@ -28,7 +28,6 @@ type GoogleMapsApi = {
   maps: {
     Map: new (elemento: HTMLElement, opciones: { center: Coordenadas; zoom: number }) => MapaInstancia;
     Marker: new (opciones: { map: unknown; position: Coordenadas }) => { setPosition: (posicion: Coordenadas) => void };
-    Geocoder: new () => { geocode: (solicitud: { location: Coordenadas }) => Promise<{ results: { formatted_address: string }[] }> };
   };
 };
 
@@ -84,7 +83,6 @@ export default function CrearEventoPage() {
       const marcador = new window.google.maps.Marker({ map: mapa as unknown, position: coordenadasIniciales });
       instanciaMapaRef.current = mapa;
       marcadorRef.current = marcador;
-      const geocoder = new window.google.maps.Geocoder();
 
       mapa.addListener("click", (evento) => {
         if (!evento.latLng) return;
@@ -92,9 +90,7 @@ export default function CrearEventoPage() {
         marcador.setPosition(punto);
         setLatitud(String(punto.lat));
         setLongitud(String(punto.lng));
-        void geocoder.geocode({ location: punto })
-          .then(({ results }) => setDireccion(results[0]?.formatted_address ?? `${punto.lat}, ${punto.lng}`))
-          .catch(() => setDireccion(`${punto.lat}, ${punto.lng}`));
+        setErrorMapa("");
       });
     };
 
@@ -139,8 +135,12 @@ export default function CrearEventoPage() {
 
     const latitudNumerica = Number(latitud);
     const longitudNumerica = Number(longitud);
-    if (!direccion.trim() || !Number.isFinite(latitudNumerica) || !Number.isFinite(longitudNumerica)) {
-      setError("Ingresá una dirección y coordenadas válidas, o seleccioná el punto en el mapa.");
+    if (!direccion.trim()) {
+      setError("Ingresá la dirección que querés mostrar en la invitación.");
+      return;
+    }
+    if (!Number.isFinite(latitudNumerica) || !Number.isFinite(longitudNumerica)) {
+      setError("Seleccioná el punto del lugar en el mapa o ingresá sus coordenadas.");
       return;
     }
 
@@ -206,9 +206,10 @@ export default function CrearEventoPage() {
             <p className="block text-sm font-medium text-slate-800">Ubicación</p>
             {!MAPS_API_KEY && <p className="mt-1 text-sm text-amber-700">Falta configurar `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` para elegir el punto en Google Maps.</p>}
             {errorMapa && <p className="mt-1 text-sm text-red-700">{errorMapa}</p>}
-            {MAPS_API_KEY && <div ref={mapaRef} className="mt-2 h-72 w-full rounded border border-slate-300" aria-label="Mapa para elegir ubicación" />}
+            {MAPS_API_KEY && <><div ref={mapaRef} className="mt-2 h-72 w-full rounded border border-slate-300" aria-label="Mapa para elegir ubicación" /><p className="mt-2 text-xs leading-5 text-slate-500">Marcá el punto en el mapa y escribí debajo la dirección que querés mostrar. No se consulta ningún servicio de geocodificación.</p></>}
             <label htmlFor="direccion" className="mt-3 block text-sm font-medium text-slate-800">Dirección</label>
-            <input id="direccion" value={direccion} onChange={(event) => actualizarDireccion(event.target.value)} placeholder="Escribí la dirección o pegá coordenadas: -34.6037, -58.3816" className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+            <input id="direccion" value={direccion} onChange={(event) => actualizarDireccion(event.target.value)} placeholder="Ej.: Av. Corrientes 1234, CABA" className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
+            <div className="mt-3 grid grid-cols-2 gap-3"><div><label htmlFor="latitud" className="block text-xs font-medium text-slate-600">Latitud</label><input id="latitud" value={latitud} onChange={(event) => setLatitud(event.target.value)} inputMode="decimal" placeholder="-34.6037" className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm" /></div><div><label htmlFor="longitud" className="block text-xs font-medium text-slate-600">Longitud</label><input id="longitud" value={longitud} onChange={(event) => setLongitud(event.target.value)} inputMode="decimal" placeholder="-58.3816" className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm" /></div></div>
           </div>
 
           <section className="md:col-span-2">

@@ -35,7 +35,7 @@ public class PlantillaDisenoSeeder implements CommandLineRunner {
         crearSiNoExiste("Fiesta infantil", "Una invitación alegre y colorida para cumpleaños infantiles.", "#F97316", "#FEF3C7", "confeti", "globos", "globos-explosion", Map.of("tipografia", "alegre", "estiloTarjeta", "redondeada"));
         crearSiNoExiste("Elegante dorado", "Un estilo sobrio con detalles dorados para una celebración especial.", "#7C5C1E", "#FFF7E6", "brillos", "estrellas-doradas", "fuegos-artificiales", Map.of("tipografia", "serif", "estiloTarjeta", "clasica"));
         crearSiNoExiste("Minimalista", "Un diseño limpio y moderno que prioriza la información del evento.", "#1E293B", "#F8FAFC", "ninguna", "puntos-de-luz", "confeti", Map.of("tipografia", "moderna", "estiloTarjeta", "simple"));
-        crearSiNoExiste("Noche neón", "Una invitación vibrante para festejos nocturnos y juveniles.", "#7C3AED", "#111827", "destellos", "estrellas-fugaces", "lluvia-estrellas", Map.of("tipografia", "urbana", "estiloTarjeta", "intensa"));
+        crearSiNoExiste("Noche neón", "Una invitación vibrante para festejos nocturnos y juveniles.", "#7C3AED", "#111827", "destellos", "lluvia-estrellas", "confeti", Map.of("tipografia", "urbana", "estiloTarjeta", "intensa"));
     }
 
     private void crearSiNoExiste(

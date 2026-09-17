@@ -1,6 +1,7 @@
 package com.iunex.backend.controller;
 
 import com.iunex.backend.dto.usuario.CrearUsuarioRequest;
+import com.iunex.backend.dto.usuario.ActualizarUsuarioRequest;
 import com.iunex.backend.dto.usuario.UsuarioResponse;
 import com.iunex.backend.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +44,11 @@ public class UsuarioController {
     @GetMapping("/{id}")
     public UsuarioResponse obtenerPorId(@PathVariable UUID id) {
         return usuarioService.obtenerPorId(id);
+    }
+
+    @PutMapping("/{id}")
+    public UsuarioResponse actualizar(@PathVariable UUID id, @Valid @RequestBody ActualizarUsuarioRequest request) {
+        return usuarioService.actualizar(id, request);
     }
 
     @DeleteMapping("/{id}")

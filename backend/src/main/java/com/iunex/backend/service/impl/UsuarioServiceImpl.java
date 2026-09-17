@@ -1,6 +1,7 @@
 package com.iunex.backend.service.impl;
 
 import com.iunex.backend.dto.usuario.CrearUsuarioRequest;
+import com.iunex.backend.dto.usuario.ActualizarUsuarioRequest;
 import com.iunex.backend.dto.usuario.UsuarioResponse;
 import com.iunex.backend.entity.Usuario;
 import com.iunex.backend.exception.CredencialesInvalidasException;
@@ -67,6 +68,26 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public UsuarioResponse actualizar(UUID id, ActualizarUsuarioRequest request) {
+        Usuario usuario = buscarEntidad(id);
+        String correo = normalizarCorreo(request.correo());
+        String username = normalizarUsername(request.username());
+
+        if (!usuario.getCorreo().equals(correo) && usuarioRepository.existsByCorreo(correo)) {
+            throw new IllegalArgumentException("Ya existe un usuario con ese correo.");
+        }
+        if (!usuario.getUsername().equals(username) && usuarioRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("El nombre de usuario ya está en uso.");
+        }
+
+        usuario.setNombre(request.nombre().trim());
+        usuario.setCorreo(correo);
+        usuario.setUsername(username);
+        usuario.setFotoPerfil(normalizarFotoPerfil(request.fotoPerfil()));
+        return aResponse(usuarioRepository.save(usuario));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<UsuarioResponse> listar() {
         return usuarioRepository.findAll().stream().map(this::aResponse).toList();
@@ -84,7 +105,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private UsuarioResponse aResponse(Usuario usuario) {
         return new UsuarioResponse(
-                usuario.getId(), usuario.getNombre(), usuario.getCorreo(), usuario.getUsername(), usuario.getCreadoEn()
+                usuario.getId(), usuario.getNombre(), usuario.getCorreo(), usuario.getUsername(), usuario.getFotoPerfil(), usuario.getCreadoEn()
         );
     }
 
@@ -94,5 +115,10 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private String normalizarUsername(String username) {
         return username.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizarFotoPerfil(String fotoPerfil) {
+        if (fotoPerfil == null || fotoPerfil.isBlank()) return null;
+        return fotoPerfil.trim();
     }
 }

@@ -34,6 +34,9 @@ public class Usuario {
     @Column(name = "contrasena_hash", nullable = false, length = 255)
     private String contrasenaHash;
 
+    @Column(name = "foto_perfil", length = 500)
+    private String fotoPerfil;
+
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
 
@@ -56,6 +59,8 @@ public class Usuario {
     public void setUsername(String username) { this.username = username; }
     public String getContrasenaHash() { return contrasenaHash; }
     public void setContrasenaHash(String contrasenaHash) { this.contrasenaHash = contrasenaHash; }
+    public String getFotoPerfil() { return fotoPerfil; }
+    public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
     public LocalDateTime getCreadoEn() { return creadoEn; }
     public List<Evento> getEventos() { return eventos; }
 }
