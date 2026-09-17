@@ -168,6 +168,7 @@ public class EventoServiceImpl implements EventoService {
                 evento.getId(), evento.getUsuario().getId(), evento.getNombreCumpleanero(),
                 evento.getFechaNacimiento(), evento.getFechaHoraEvento(), evento.getNombreLugar(),
                 evento.getDireccion(), evento.getLatitud(), evento.getLongitud(), evento.getEnlacePublico(), evento.getEstado(),
+                evento.getInvitados().size(),
                 evento.getPlantillaDiseno() == null ? null : evento.getPlantillaDiseno().getId(),
                 evento.getEfectoFondoPersonalizado() == null ? null : evento.getEfectoFondoPersonalizado().getId(),
                 evento.getEfectoAperturaPersonalizado() == null ? null : evento.getEfectoAperturaPersonalizado().getId(),

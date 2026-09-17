@@ -202,7 +202,8 @@ export default function InvitacionPage() {
               <Campo nombre="nombre" etiqueta="Nombre" requerido />
               <Campo nombre="telefono" etiqueta="Teléfono" tipo="tel" requerido />
               <label htmlFor="nota" className="mt-5 block text-sm font-medium text-slate-800">Nota para el organizador</label>
-              <textarea id="nota" name="nota" className="mt-1 min-h-20 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500" />
+              <textarea id="nota" name="nota" maxLength={70} className="mt-1 min-h-20 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500" />
+              <p className="mt-1 text-xs text-slate-500">Máximo 70 caracteres.</p>
               {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
               <button type="submit" disabled={enviando} className="mt-5 w-full rounded-xl px-4 py-3 font-medium text-white shadow-sm disabled:opacity-60" style={{ backgroundColor: colorPrimario }}>{enviando ? "Guardando..." : "Enviar respuesta"}</button>
             </form>

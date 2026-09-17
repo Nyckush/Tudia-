@@ -18,6 +18,7 @@ public record EventoResponse(
         BigDecimal longitud,
         String enlacePublico,
         String estado,
+        int cantidadInvitados,
         UUID plantillaDisenoId,
         UUID efectoFondoId,
         UUID efectoAperturaId,

@@ -1,0 +1,60 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: tudia-mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tudia}
+      MYSQL_USER: ${MYSQL_USER:-tudia}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tudia_dev_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-tudia_root_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: tudia-backend
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-tudia}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=America/Argentina/Buenos_Aires
+      DB_USERNAME: ${MYSQL_USER:-tudia}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-tudia_dev_password}
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      UPLOAD_DIR: /app/uploads
+      SEED_ENABLED: ${SEED_ENABLED:-true}
+      SEED_USERNAME: ${SEED_USERNAME:-nicko}
+      SEED_NOMBRE: ${SEED_NOMBRE:-Nicolas Velasquez}
+      SEED_CORREO: ${SEED_CORREO:-admin@example.com}
+      SEED_PASSWORD: ${SEED_PASSWORD:-cambiar_esta_clave}
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BACKEND_URL: http://backend:8080
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+    container_name: tudia-frontend
+    environment:
+      BACKEND_URL: http://backend:8080
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  uploads_data:

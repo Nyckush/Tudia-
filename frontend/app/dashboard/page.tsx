@@ -9,7 +9,7 @@ import { NavbarPrivado } from "../components/NavbarPrivado";
 const API_URL = "/api/backend";
 
 type Usuario = { id: string; nombre: string; correo: string; username: string };
-type Evento = { id: string; nombreCumpleanero: string; fechaHoraEvento: string; nombreLugar: string; estado: string; enlacePublico: string };
+type Evento = { id: string; nombreCumpleanero: string; fechaHoraEvento: string; nombreLugar: string; estado: string; enlacePublico: string; cantidadInvitados: number };
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -136,9 +136,10 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-5">
-                  <Link href={`/eventos/${evento.id}/invitados`} className="inline-flex flex-col items-center gap-1 rounded px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100" title="Ver invitados">
+                  <Link href={`/eventos/${evento.id}/invitados`} className="relative inline-flex flex-col items-center gap-1 rounded px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100" title="Ver invitados">
                     <Users size={18} strokeWidth={1.8} />
                     Invitados
+                    {evento.cantidadInvitados > 0 && <span className="absolute -right-1 -top-1 grid min-w-5 size-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">{evento.cantidadInvitados > 99 ? "99+" : evento.cantidadInvitados}</span>}
                   </Link>
                   <Link href={`/eventos/${evento.id}/invitacion`} className="inline-flex flex-col items-center gap-1 rounded px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100" title="Editar invitación">
                     <Palette size={18} strokeWidth={1.8} />
