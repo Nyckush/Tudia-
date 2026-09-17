@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -25,7 +26,20 @@ export function NavbarPrivado({ children }: NavbarPrivadoProps) {
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-8">
-          <Link href="/dashboard" className="text-xl font-semibold text-slate-900">tuDía</Link>
+          <Link
+            href="/dashboard"
+            className="flex shrink-0 items-center"
+            aria-label="tuDía: ir a mis eventos"
+          >
+            <Image
+              src="/logo.png"
+              alt="tuDía"
+              width={126}
+              height={50}
+              priority
+              className="h-10 w-auto sm:h-11"
+            />
+          </Link>
           <button onClick={() => setAbierto((visible) => !visible)} className="rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 sm:hidden">
             Menú
           </button>

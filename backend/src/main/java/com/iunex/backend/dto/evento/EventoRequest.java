@@ -20,6 +20,7 @@ public record EventoRequest(
         @NotNull BigDecimal latitud,
         @NotNull BigDecimal longitud,
         @NotBlank @Size(max = 20) String estado,
+        UUID plantillaDisenoId,
         Map<String, Object> configuracionDiseno
 ) {
 }

@@ -1,6 +1,7 @@
 package com.iunex.backend.controller;
 
 import com.iunex.backend.dto.evento.EventoRequest;
+import com.iunex.backend.dto.evento.ActualizarInvitacionRequest;
 import com.iunex.backend.dto.evento.EventoResponse;
 import com.iunex.backend.dto.evento.InvitacionEventoResponse;
 import com.iunex.backend.service.EventoService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +40,11 @@ public class EventoController {
     @GetMapping("/eventos/{id}")
     public EventoResponse obtenerPorId(@PathVariable UUID id) {
         return eventoService.obtenerPorId(id);
+    }
+
+    @PutMapping("/eventos/{id}/invitacion")
+    public EventoResponse actualizarInvitacion(@PathVariable UUID id, @Valid @RequestBody ActualizarInvitacionRequest request) {
+        return eventoService.actualizarInvitacion(id, request);
     }
 
     @GetMapping("/eventos/publico/{enlacePublico}")

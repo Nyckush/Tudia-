@@ -18,6 +18,9 @@ public record EventoResponse(
         BigDecimal longitud,
         String enlacePublico,
         String estado,
+        UUID plantillaDisenoId,
+        UUID efectoFondoId,
+        UUID efectoAperturaId,
         Map<String, Object> configuracionDiseno,
         LocalDateTime creadoEn
 ) {

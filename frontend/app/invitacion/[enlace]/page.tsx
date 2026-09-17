@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import confetti from "canvas-confetti";
+import { CalendarDays, CheckCircle2, MailOpen, MapPin, Users, X } from "lucide-react";
 import { useParams } from "next/navigation";
 
 const API_URL = "/api/backend";
@@ -12,15 +14,30 @@ type EventoPublico = {
   direccion: string;
   latitud: number;
   longitud: number;
+  nombrePlantilla: string | null;
+  colorPrimario: string | null;
+  colorSecundario: string | null;
+  imagenPortadaUrl: string | null;
+  tipoAnimacion: string | null;
+  efectoFondoClave: string | null;
+  efectoAperturaClave: string | null;
+  configuracionDiseno: Record<string, unknown>;
 };
 
 export default function InvitacionPage() {
   const { enlace } = useParams<{ enlace: string }>();
   const [evento, setEvento] = useState<EventoPublico | null>(null);
+  const [invitacionAbierta, setInvitacionAbierta] = useState(false);
+  const [abriendoInvitacion, setAbriendoInvitacion] = useState(false);
   const [asiste, setAsiste] = useState(true);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [modalExitoAbierto, setModalExitoAbierto] = useState(false);
+  const [destelloFuegos, setDestelloFuegos] = useState(false);
+  const [lluviaEstrellas, setLluviaEstrellas] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const efectoPreviaEjecutado = useRef(false);
 
   useEffect(() => {
     fetch(`${API_URL}/api/eventos/publico/${enlace}`)
@@ -31,6 +48,25 @@ export default function InvitacionPage() {
       .then(setEvento)
       .catch(() => setError("No encontramos esta invitación. Pedile al organizador el enlace del evento."));
   }, [enlace]);
+
+  useEffect(() => {
+    if (!evento || efectoPreviaEjecutado.current) return;
+    const efectoApertura = evento.efectoAperturaClave ?? (typeof evento.configuracionDiseno.efectoApertura === "string" ? evento.configuracionDiseno.efectoApertura : null);
+
+    const temporizador = window.setTimeout(() => {
+      if (esFuegosArtificiales(evento.nombrePlantilla, efectoApertura)) {
+        setDestelloFuegos(true);
+        window.setTimeout(() => setDestelloFuegos(false), 1600);
+      }
+      if (esLluviaEstrellas(evento.nombrePlantilla, efectoApertura)) {
+        setLluviaEstrellas(true);
+        window.setTimeout(() => setLluviaEstrellas(false), 4000);
+      }
+      lanzarEfectoApertura(evento.nombrePlantilla, efectoApertura, true);
+      efectoPreviaEjecutado.current = true;
+    }, 350);
+    return () => window.clearTimeout(temporizador);
+  }, [evento]);
 
   async function confirmarAsistencia(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,7 +84,7 @@ export default function InvitacionPage() {
           nombre: String(formulario.get("nombre")),
           telefono: String(formulario.get("telefono")),
           asiste,
-          acompanantesConfirmados: asiste ? Number(formulario.get("acompanantesConfirmados")) : 0,
+          acompanantesConfirmados: 0,
           nota: String(formulario.get("nota")) || null,
         }),
       });
@@ -60,7 +96,9 @@ export default function InvitacionPage() {
 
       formularioHtml.reset();
       setAsiste(true);
+      setModalAbierto(false);
       setMensaje(asiste ? "¡Gracias! Tu asistencia quedó confirmada." : "Tu respuesta fue registrada.");
+      setModalExitoAbierto(true);
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {
@@ -68,57 +106,236 @@ export default function InvitacionPage() {
     }
   }
 
-  if (error && !evento) return <main className="p-6 text-center text-slate-700">{error}</main>;
-  if (!evento) return <main className="p-6 text-center text-slate-600">Cargando invitación...</main>;
+  function elegirAsistencia(valor: boolean) {
+    setAsiste(valor);
+    setError("");
+    setMensaje("");
+    setModalAbierto(true);
+  }
 
-  const fecha = new Intl.DateTimeFormat("es-AR", { dateStyle: "full", timeStyle: "short" }).format(new Date(evento.fechaHoraEvento));
+  function abrirInvitacion() {
+    if (abriendoInvitacion) return;
+    setAbriendoInvitacion(true);
+    window.setTimeout(() => {
+      setInvitacionAbierta(true);
+      if (esFuegosArtificiales(evento?.nombrePlantilla ?? null, efectoApertura)) {
+        setDestelloFuegos(true);
+        window.setTimeout(() => setDestelloFuegos(false), 1600);
+      }
+      if (esLluviaEstrellas(evento?.nombrePlantilla ?? null, efectoApertura)) {
+        setLluviaEstrellas(true);
+        window.setTimeout(() => setLluviaEstrellas(false), 4000);
+      }
+      window.setTimeout(() => lanzarEfectoApertura(evento?.nombrePlantilla ?? null, efectoApertura), 80);
+    }, 280);
+  }
+
+  if (error && !evento) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-center text-slate-700">{error}</main>;
+  if (!evento) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-600">Cargando invitación...</main>;
+
+  const colorPrimario = evento.colorPrimario ?? "#1E293B";
+  const colorSecundario = evento.colorSecundario ?? "#F8FAFC";
+  const efectoFondo = evento.efectoFondoClave ?? (typeof evento.configuracionDiseno.efectoFondo === "string" ? evento.configuracionDiseno.efectoFondo : null);
+  const efectoApertura = evento.efectoAperturaClave ?? (typeof evento.configuracionDiseno.efectoApertura === "string" ? evento.configuracionDiseno.efectoApertura : null);
+  const fechaEvento = new Date(evento.fechaHoraEvento);
+  const fecha = new Intl.DateTimeFormat("es-AR", { dateStyle: "full" }).format(fechaEvento);
+  const hora = new Intl.DateTimeFormat("es-AR", { timeStyle: "short" }).format(fechaEvento);
   const mapa = `https://www.google.com/maps/search/?api=1&query=${evento.latitud},${evento.longitud}`;
+  const estiloPortada = evento.imagenPortadaUrl
+    ? { backgroundImage: `linear-gradient(135deg, ${colorPrimario}e6, ${colorSecundario}d9), url(${evento.imagenPortadaUrl})` }
+    : { backgroundImage: `linear-gradient(135deg, ${colorPrimario}, ${colorSecundario})` };
+
+  if (!invitacionAbierta) {
+    return (
+      <main className="relative grid min-h-screen place-items-center overflow-hidden bg-cover bg-center bg-fixed p-6" style={estiloPortada}>
+        <FondoAnimado nombrePlantilla={evento.nombrePlantilla} efectoFondo={efectoFondo} />
+        {destelloFuegos && <DestellosFuegos />}
+        {lluviaEstrellas && <LluviaDeEstrellas />}
+        <ConfetiPrevia />
+        <section className={`relative w-full max-w-md overflow-hidden p-7 text-center transition duration-300 sm:p-10 ${abriendoInvitacion ? "scale-105 opacity-0" : "scale-100 opacity-100"}`}>
+          <div className="relative z-10">
+            <div className="mx-auto grid size-16 place-items-center rounded-full text-white shadow-lg" style={{ backgroundColor: colorPrimario }}><MailOpen size={28} /></div>
+            <p className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Tenés una invitación especial</p>
+            <h1 className="mt-4 text-3xl font-semibold text-white">De {evento.nombreCumpleanero}</h1>
+            <p className="mt-4 text-sm leading-6 text-white/90">Hay una celebración esperando por vos.</p>
+            <button type="button" onClick={abrirInvitacion} disabled={abriendoInvitacion} className="mt-10 inline-flex items-center gap-3 rounded-2xl px-10 py-5 text-lg font-semibold text-white shadow-lg ring-2 ring-white/30 transition duration-300 hover:-translate-y-1 hover:scale-105 hover:brightness-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/60 disabled:opacity-70" style={{ backgroundColor: colorPrimario }}><MailOpen size={24} /> Abrir invitación</button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 sm:p-8">
-      <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">Estás invitado/a</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">Cumpleaños de {evento.nombreCumpleanero}</h1>
-          <dl className="mt-6 space-y-4 text-slate-700">
-            <div><dt className="text-sm text-slate-500">Cuándo</dt><dd>{fecha}</dd></div>
-            <div><dt className="text-sm text-slate-500">Dónde</dt><dd>{evento.nombreLugar}</dd><dd className="text-sm">{evento.direccion}</dd></div>
-          </dl>
-          <a href={mapa} target="_blank" rel="noreferrer" className="mt-6 inline-block rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Ver ubicación en Google Maps</a>
+    <main className="relative min-h-screen overflow-hidden bg-cover bg-center bg-fixed px-4 py-8 sm:py-12" style={estiloPortada}>
+      <FondoAnimado nombrePlantilla={evento.nombrePlantilla} efectoFondo={efectoFondo} />
+      {destelloFuegos && <DestellosFuegos />}
+      {lluviaEstrellas && <LluviaDeEstrellas />}
+      <div className="relative mx-auto max-w-4xl animate-[invite-reveal_550ms_ease-out]">
+        <section className="relative overflow-hidden rounded-3xl bg-cover bg-center shadow-xl" style={estiloPortada}>
+          <FondoAnimado nombrePlantilla={evento.nombrePlantilla} efectoFondo={efectoFondo} dentroDeTarjeta />
+          <div className="relative z-10 px-6 py-14 text-center text-white sm:px-12 sm:py-20">
+            <p className="text-sm font-medium tracking-[0.2em] text-white/80">ESTÁS INVITADO/A</p>
+            <h1 className="mt-4 text-4xl font-semibold sm:text-6xl">{evento.nombreCumpleanero}</h1>
+            <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-white/90 sm:text-lg">Quiero compartir este día especial con vos. ¡Te espero para festejar!</p>
+            {evento.nombrePlantilla && <p className="mt-8 text-xs font-medium uppercase tracking-widest text-white/70">{evento.nombrePlantilla}</p>}
+          </div>
         </section>
 
-        <form onSubmit={confirmarAsistencia} className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Confirmá tu asistencia</h2>
-          <p className="mt-1 text-sm text-slate-600">Dejá tus datos para que el organizador pueda preparar el evento.</p>
+        <div className="grid gap-6 py-6">
+          <section className="p-2 sm:p-3">
+            <p className="px-2 text-sm font-semibold uppercase tracking-wider text-white" style={{ textShadow: "0 1px 8px rgb(0 0 0 / 30%)" }}>La celebración</p>
+            <div className="mt-6 space-y-6">
+              <Detalle icono={<CalendarDays size={21} />} titulo="Cuándo"><p className="font-medium text-slate-900">{fecha}</p><p>{hora} hs</p></Detalle>
+              <Detalle icono={<MapPin size={21} />} titulo="Dónde"><p className="font-medium text-slate-900">{evento.nombreLugar}</p><p>{evento.direccion}</p></Detalle>
+            </div>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <a href={mapa} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/85 px-4 py-3 text-sm font-medium text-slate-800 shadow-sm backdrop-blur hover:bg-white"><MapPin size={18} /> Cómo llegar</a>
+              <a href={crearEnlaceCalendario(evento)} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/85 px-4 py-3 text-sm font-medium text-slate-800 shadow-sm backdrop-blur hover:bg-white"><CalendarDays size={18} /> Agendar</a>
+            </div>
+          </section>
 
-          <Campo nombre="nombre" etiqueta="Nombre" requerido />
-          <Campo nombre="telefono" etiqueta="Teléfono" tipo="tel" requerido />
-
-          <fieldset className="mt-4">
-            <legend className="text-sm font-medium text-slate-800">¿Vas a asistir?</legend>
-            <label className="mt-2 mr-4 inline-flex items-center gap-2"><input type="radio" checked={asiste} onChange={() => setAsiste(true)} /> Sí, asistiré</label>
-            <label className="inline-flex items-center gap-2"><input type="radio" checked={!asiste} onChange={() => setAsiste(false)} /> No podré asistir</label>
-          </fieldset>
-
-          {asiste && <Campo nombre="acompanantesConfirmados" etiqueta="Acompañantes" tipo="number" valorInicial="0" requerido minimo={0} />}
-
-          <label htmlFor="nota" className="mt-4 block text-sm font-medium text-slate-800">Nota para el organizador</label>
-          <textarea id="nota" name="nota" className="mt-1 min-h-20 w-full rounded border border-slate-300 px-3 py-2" />
-
-          {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
-          {mensaje && <p className="mt-4 text-sm text-green-700">{mensaje}</p>}
-          <button type="submit" disabled={enviando} className="mt-5 w-full rounded bg-slate-900 px-4 py-2 font-medium text-white disabled:opacity-60">{enviando ? "Guardando..." : "Enviar respuesta"}</button>
-        </form>
+          <section className="p-2 sm:p-3">
+            <div className="rounded-2xl bg-white/85 p-5 shadow-sm backdrop-blur">
+              <div className="flex items-center gap-2" style={{ color: colorPrimario }}><Users size={21} /><h2 className="text-xl font-semibold">Confirmá asistencia</h2></div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">¿Vas a asistir?</p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button type="button" onClick={() => elegirAsistencia(true)} className="rounded-xl px-3 py-3 text-sm font-medium text-white shadow-sm" style={{ backgroundColor: colorPrimario }}>Sí, asistiré</button>
+                <button type="button" onClick={() => elegirAsistencia(false)} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">No podré asistir</button>
+              </div>
+            </div>
+          </section>
+        </div>
+        {modalAbierto && <div className="fixed inset-0 z-50 grid animate-[modal-backdrop-in_220ms_ease-out] place-items-center bg-slate-950/50 p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="titulo-confirmacion" className="w-full max-w-md animate-[modal-panel-in_320ms_cubic-bezier(.16,1,.3,1)] rounded-3xl bg-white p-6 shadow-2xl sm:p-7">
+            <div className="flex items-start justify-between gap-4"><div><h2 id="titulo-confirmacion" className="text-xl font-semibold text-slate-900">{asiste ? "Confirmá tu asistencia" : "Registrá tu respuesta"}</h2><p className="mt-1 text-sm text-slate-600">{asiste ? "Completá tus datos para confirmar." : "Contanos quién no podrá asistir."}</p></div><button type="button" onClick={() => setModalAbierto(false)} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Cerrar"><X size={20} /></button></div>
+            <form onSubmit={confirmarAsistencia}>
+              <Campo nombre="nombre" etiqueta="Nombre" requerido />
+              <Campo nombre="telefono" etiqueta="Teléfono" tipo="tel" requerido />
+              <label htmlFor="nota" className="mt-5 block text-sm font-medium text-slate-800">Nota para el organizador</label>
+              <textarea id="nota" name="nota" className="mt-1 min-h-20 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500" />
+              {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+              <button type="submit" disabled={enviando} className="mt-5 w-full rounded-xl px-4 py-3 font-medium text-white shadow-sm disabled:opacity-60" style={{ backgroundColor: colorPrimario }}>{enviando ? "Guardando..." : "Enviar respuesta"}</button>
+            </form>
+          </div>
+        </div>}
+        {modalExitoAbierto && <div className="fixed inset-0 z-50 grid animate-[modal-backdrop-in_220ms_ease-out] place-items-center bg-slate-950/50 p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="titulo-confirmacion-exitosa" className="w-full max-w-sm animate-[modal-panel-in_320ms_cubic-bezier(.16,1,.3,1)] rounded-3xl bg-white p-7 text-center shadow-2xl">
+            <div className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 size={30} /></div>
+            <h2 id="titulo-confirmacion-exitosa" className="mt-5 text-xl font-semibold text-slate-900">¡Respuesta registrada!</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{mensaje}</p>
+            <button type="button" onClick={() => setModalExitoAbierto(false)} className="mt-6 w-full rounded-xl px-4 py-3 font-medium text-white shadow-sm" style={{ backgroundColor: colorPrimario }}>Entendido</button>
+          </div>
+        </div>}
+        <p className="pb-4 text-center text-xs text-slate-500">Esta invitación fue creada con tuDía.</p>
       </div>
     </main>
   );
 }
 
+function Detalle({ icono, titulo, children }: { icono: React.ReactNode; titulo: string; children: React.ReactNode }) {
+  return <div className="flex gap-3 rounded-2xl bg-white/85 p-5 text-sm leading-6 text-slate-600 shadow-sm backdrop-blur"><span className="mt-1 text-slate-700">{icono}</span><div><p className="font-medium text-slate-500">{titulo}</p>{children}</div></div>;
+}
+
 function Campo({ nombre, etiqueta, tipo = "text", valorInicial, requerido = false, minimo }: { nombre: string; etiqueta: string; tipo?: string; valorInicial?: string; requerido?: boolean; minimo?: number }) {
-  return (
-    <div className="mt-4">
-      <label htmlFor={nombre} className="block text-sm font-medium text-slate-800">{etiqueta}</label>
-      <input id={nombre} name={nombre} type={tipo} defaultValue={valorInicial} required={requerido} min={minimo} className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
-    </div>
-  );
+  return <div className="mt-4"><label htmlFor={nombre} className="block text-sm font-medium text-slate-800">{etiqueta}</label><input id={nombre} name={nombre} type={tipo} defaultValue={valorInicial} required={requerido} min={minimo} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500" /></div>;
+}
+
+function ConfetiPrevia() {
+  const piezas = ["●", "▲", "■", "●", "■", "▲", "●", "■", "▲", "●", "■", "▲"];
+  const colores = ["#facc15", "#fb7185", "#38bdf8", "#a78bfa", "#34d399", "#fb923c"];
+  return <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">{piezas.map((pieza, indice) => <span key={`${pieza}-${indice}`} className="absolute opacity-0 animate-[preview-confetti_4.5s_ease-in-out_infinite] text-lg" style={{ left: `${5 + (indice * 17) % 90}%`, top: `${8 + (indice * 29) % 78}%`, color: colores[indice % colores.length], animationDelay: `${indice * 0.28}s` }}>{pieza}</span>)}</div>;
+}
+
+function esFuegosArtificiales(nombrePlantilla: string | null, efectoSeleccionado: string | null) {
+  if (efectoSeleccionado) return efectoSeleccionado === "fuegos-artificiales";
+  return (nombrePlantilla ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("dorado");
+}
+
+function esLluviaEstrellas(nombrePlantilla: string | null, efectoSeleccionado: string | null) {
+  if (efectoSeleccionado) return efectoSeleccionado === "lluvia-estrellas";
+  return (nombrePlantilla ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("neon");
+}
+
+function DestellosFuegos() {
+  return <div aria-hidden className="pointer-events-none fixed inset-0 z-[5] overflow-hidden"><span className="firework-glow" style={{ left: "10%", top: "14%" }} /><span className="firework-glow" style={{ left: "68%", top: "8%", animationDelay: "180ms" }} /><span className="firework-glow" style={{ left: "24%", top: "34%", animationDelay: "360ms" }} /><span className="firework-glow" style={{ left: "54%", top: "34%", animationDelay: "540ms" }} /></div>;
+}
+
+function LluviaDeEstrellas() {
+  const posiciones = [[4, 2], [12, 28], [21, 10], [30, 42], [39, 4], [48, 24], [57, 12], [66, 38], [75, 6], [84, 30], [93, 16], [8, 54], [26, 62], [45, 48], [62, 58], [80, 52], [96, 68]];
+  return <div aria-hidden className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">{posiciones.map(([left, top], indice) => <span key={indice} className="luminous-rain-star" style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${indice * 110}ms` }}>✦</span>)}</div>;
+}
+
+function FondoAnimado({ nombrePlantilla, efectoFondo, dentroDeTarjeta = false }: { nombrePlantilla: string | null; efectoFondo: string | null; dentroDeTarjeta?: boolean }) {
+  const plantilla = (efectoFondo ?? nombrePlantilla ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const esNocheNeon = plantilla.includes("noche neon") || plantilla.includes("estrellas-fugaces") || plantilla.includes("estrellas fugaces");
+  const esEleganteDorado = plantilla.includes("elegante dorado") || plantilla.includes("estrellas-doradas") || plantilla.includes("estrellas doradas");
+  const esMinimalista = plantilla.includes("minimalista") || plantilla.includes("puntos-de-luz") || plantilla.includes("puntos de luz");
+  const posiciones = [[8, 14], [20, 45], [34, 25], [48, 68], [62, 18], [76, 50], [90, 30]];
+  const posicionesTarjeta = [[4, 8], [38, 24], [70, 10]];
+  const posicionCapa = dentroDeTarjeta ? "absolute" : "fixed";
+
+  if (esNocheNeon) {
+    const posicionesEfecto = dentroDeTarjeta ? posicionesTarjeta : posiciones;
+    return <div aria-hidden className={`pointer-events-none ${posicionCapa} inset-0 z-0 overflow-hidden`}>{posicionesEfecto.map(([izquierda, arriba], indice) => <span key={`${izquierda}-${arriba}`} className={dentroDeTarjeta ? "shooting-star shooting-star-card" : "shooting-star"} style={{ left: `${izquierda}%`, top: `${arriba}%`, animationDelay: `${indice * 0.7}s` }} />)}</div>;
+  }
+
+  if (esEleganteDorado) {
+    const coloresEstrellas = ["#fff7cc", "#fbbf24", "#ffffff", "#fde68a", "#f59e0b", "#fff7cc", "#fef3c7"];
+    return <div aria-hidden className={`pointer-events-none ${posicionCapa} inset-0 z-0 overflow-hidden`}>{posiciones.map(([izquierda, arriba], indice) => <span key={`${izquierda}-${arriba}`} className="absolute opacity-0 animate-[invite-float_4s_ease-in-out_infinite] text-lg drop-shadow-[0_0_6px_rgba(251,191,36,.9)]" style={{ left: `${izquierda}%`, top: `${arriba}%`, color: coloresEstrellas[indice], animationDelay: `${indice * 0.42}s` }}>✦</span>)}</div>;
+  }
+
+  if (esMinimalista) {
+    const coloresLuz = ["#ffffff", "#e2e8f0", "#ffffff", "#cbd5e1", "#ffffff", "#e2e8f0", "#ffffff"];
+    return <div aria-hidden className={`pointer-events-none ${posicionCapa} inset-0 z-0 overflow-hidden`}>{posiciones.map(([izquierda, arriba], indice) => <span key={`${izquierda}-${arriba}`} className="background-light absolute size-1.5 rounded-full opacity-0 shadow-[0_0_10px_2px_rgba(255,255,255,.65)] animate-[minimal-glow_4.5s_ease-in-out_infinite]" style={{ left: `${izquierda}%`, top: `${arriba}%`, backgroundColor: coloresLuz[indice], animationDelay: `${indice * 0.48}s` }} />)}</div>;
+  }
+
+  const coloresGlobos = ["#fb7185", "#facc15", "#38bdf8", "#a78bfa", "#34d399", "#fb923c", "#f472b6"];
+  return <div aria-hidden className={`pointer-events-none ${posicionCapa} inset-0 z-0 overflow-hidden`}>{posiciones.map(([izquierda, arriba], indice) => <span key={`${izquierda}-${arriba}`} className="background-balloon absolute opacity-0 animate-[invite-float_4s_ease-in-out_infinite]" style={{ left: `${izquierda}%`, top: `${arriba}%`, animationDelay: `${indice * 0.42}s`, "--balloon-color": coloresGlobos[indice] } as React.CSSProperties} />)}</div>;
+}
+
+function lanzarEfectoApertura(nombrePlantilla: string | null, efectoSeleccionado: string | null, enPantallaPrevia = false) {
+  const plantilla = (nombrePlantilla ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const efecto = efectoSeleccionado ?? (plantilla.includes("infantil") ? "globos-explosion" : plantilla.includes("neon") ? "lluvia-estrellas" : plantilla.includes("dorado") ? "fuegos-artificiales" : "confeti");
+  const opcionesBase = { disableForReducedMotion: false, zIndex: 100 };
+
+  if (efecto === "globos-explosion") {
+    lanzarExplosionesDeGlobos(enPantallaPrevia ? 2 : 3, enPantallaPrevia);
+    return;
+  }
+
+  if (efecto === "lluvia-estrellas") {
+    return;
+  }
+
+  if (efecto === "fuegos-artificiales") {
+    const fuegoArtificial = (x: number, y: number) => confetti({ ...opcionesBase, particleCount: 115, spread: 360, startVelocity: 44, decay: 0.92, gravity: 0.62, ticks: 180, scalar: 0.72, flat: true, shapes: ["circle"], colors: ["#fff7cc", "#fbbf24", "#fb7185", "#a78bfa", "#38bdf8", "#ffffff"], origin: { x, y } });
+    [[0.18, 0.34], [0.82, 0.34], [0.34, 0.56], [0.66, 0.56]].forEach(([x, y], indice) => window.setTimeout(() => fuegoArtificial(x, y), indice * 180));
+    return;
+  }
+
+  const posicionesConfeti = enPantallaPrevia ? [[0.18, 0.62], [0.82, 0.62], [0.34, 0.76], [0.66, 0.76]] : [[0.18, 0.34], [0.82, 0.34], [0.34, 0.56], [0.66, 0.56]];
+  posicionesConfeti.forEach(([x, y], indice) => window.setTimeout(() => confetti({ ...opcionesBase, particleCount: enPantallaPrevia ? 28 : 34, spread: 80, startVelocity: 24, gravity: 0.8, colors: ["#fb7185", "#facc15", "#38bdf8", "#a78bfa", "#34d399"], origin: { x, y } }), indice * 180));
+}
+
+function lanzarExplosionesDeGlobos(tandas: 2 | 3, enPantallaPrevia = false) {
+  const globo = confetti.shapeFromPath("M8 0C3.6 0 0 3.7 0 8.8c0 5.3 3.1 9.4 8 13.2v4.4l2-2.2v-2.2c4.9-3.8 8-7.9 8-13.2C18 3.7 14.4 0 10 0Z");
+  const opcionesBase = { disableForReducedMotion: false, zIndex: 100 };
+  const explotarGlobos = (x: number, y: number) => confetti({ ...opcionesBase, particleCount: 25, spread: 68, startVelocity: 30, gravity: 0.45, scalar: 4, colors: ["#fb7185", "#facc15", "#38bdf8", "#a78bfa", "#34d399", "#fb923c"], shapes: [globo], origin: { x, y } });
+  const explosionesSuperiores = [[0.18, 0.34], [0.82, 0.34], [0.34, 0.56], [0.66, 0.56]];
+  const explosionesInferiores = [[0.18, 0.95], [0.82, 0.95], [0.34, 0.84], [0.66, 0.84]];
+  const explosionesPrevia = [[0.18, 0.62], [0.82, 0.62], [0.34, 0.76], [0.66, 0.76]];
+  const lanzarTanda = (posiciones: number[][], retrasoInicial: number) => posiciones.forEach(([x, y], indice) => window.setTimeout(() => explotarGlobos(x, y), retrasoInicial + indice * 180));
+
+  const posicionesPrimerasTandas = enPantallaPrevia ? explosionesPrevia : explosionesSuperiores;
+  lanzarTanda(posicionesPrimerasTandas, 0);
+  lanzarTanda(posicionesPrimerasTandas, 1300);
+  if (tandas === 3) lanzarTanda(explosionesInferiores, 2600);
+}
+
+function crearEnlaceCalendario(evento: EventoPublico) {
+  const inicio = new Date(evento.fechaHoraEvento);
+  const fin = new Date(inicio.getTime() + 3 * 60 * 60 * 1000);
+  const formatoGoogle = (fecha: Date) => fecha.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const parametros = new URLSearchParams({ text: `Cumpleaños de ${evento.nombreCumpleanero}`, dates: `${formatoGoogle(inicio)}/${formatoGoogle(fin)}`, location: `${evento.nombreLugar}, ${evento.direccion}` });
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&${parametros.toString()}`;
 }

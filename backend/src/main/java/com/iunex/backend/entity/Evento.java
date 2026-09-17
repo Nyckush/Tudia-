@@ -35,6 +35,18 @@ public class Evento {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    @ManyToOne
+    @JoinColumn(name = "plantilla_diseno_id")
+    private PlantillaDiseno plantillaDiseno;
+
+    @ManyToOne
+    @JoinColumn(name = "efecto_fondo_personalizado_id")
+    private EfectoFondo efectoFondoPersonalizado;
+
+    @ManyToOne
+    @JoinColumn(name = "efecto_apertura_personalizado_id")
+    private EfectoApertura efectoAperturaPersonalizado;
+
     @Column(name = "nombre_cumpleanero", nullable = false, length = 120)
     private String nombreCumpleanero;
 
@@ -82,6 +94,12 @@ public class Evento {
     public UUID getId() { return id; }
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public PlantillaDiseno getPlantillaDiseno() { return plantillaDiseno; }
+    public void setPlantillaDiseno(PlantillaDiseno plantillaDiseno) { this.plantillaDiseno = plantillaDiseno; }
+    public EfectoFondo getEfectoFondoPersonalizado() { return efectoFondoPersonalizado; }
+    public void setEfectoFondoPersonalizado(EfectoFondo efectoFondoPersonalizado) { this.efectoFondoPersonalizado = efectoFondoPersonalizado; }
+    public EfectoApertura getEfectoAperturaPersonalizado() { return efectoAperturaPersonalizado; }
+    public void setEfectoAperturaPersonalizado(EfectoApertura efectoAperturaPersonalizado) { this.efectoAperturaPersonalizado = efectoAperturaPersonalizado; }
     public String getNombreCumpleanero() { return nombreCumpleanero; }
     public void setNombreCumpleanero(String nombreCumpleanero) { this.nombreCumpleanero = nombreCumpleanero; }
     public LocalDate getFechaNacimiento() { return fechaNacimiento; }

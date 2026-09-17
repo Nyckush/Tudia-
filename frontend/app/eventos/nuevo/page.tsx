@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Palette, Sparkles } from "lucide-react";
 import { NavbarPrivado } from "../../components/NavbarPrivado";
 
 const API_URL = "/api/backend";
@@ -10,6 +11,14 @@ const MAP_CENTER = { lat: -34.6037, lng: -58.3816 };
 
 type Usuario = { id: string };
 type Coordenadas = { lat: number; lng: number };
+type PlantillaDiseno = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  colorPrimario: string | null;
+  colorSecundario: string | null;
+  tipoAnimacion: string | null;
+};
 type MapaInstancia = {
   addListener: (evento: string, callback: (evento: { latLng?: { lat: () => number; lng: () => number } }) => void) => void;
   setCenter: (centro: Coordenadas) => void;
@@ -38,6 +47,10 @@ export default function CrearEventoPage() {
   const [direccion, setDireccion] = useState("");
   const [latitud, setLatitud] = useState("");
   const [longitud, setLongitud] = useState("");
+  const [plantillas, setPlantillas] = useState<PlantillaDiseno[]>([]);
+  const [plantillaDisenoId, setPlantillaDisenoId] = useState<string | null>(null);
+  const [cargandoPlantillas, setCargandoPlantillas] = useState(true);
+  const [errorPlantillas, setErrorPlantillas] = useState("");
   const [error, setError] = useState("");
   const [errorMapa, setErrorMapa] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -45,6 +58,20 @@ export default function CrearEventoPage() {
   useEffect(() => {
     if (!localStorage.getItem("tudia.usuario")) router.replace("/login");
   }, [router]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/plantillas-diseno`)
+      .then(async (respuesta) => {
+        if (!respuesta.ok) throw new Error();
+        return (await respuesta.json()) as PlantillaDiseno[];
+      })
+      .then((plantillasDisponibles) => {
+        setPlantillas(plantillasDisponibles);
+        setPlantillaDisenoId(plantillasDisponibles[0]?.id ?? null);
+      })
+      .catch(() => setErrorPlantillas("No se pudieron cargar los diseños."))
+      .finally(() => setCargandoPlantillas(false));
+  }, []);
 
   useEffect(() => {
     if (!MAPS_API_KEY || !mapaRef.current) return;
@@ -141,6 +168,7 @@ export default function CrearEventoPage() {
           latitud: latitudNumerica,
           longitud: longitudNumerica,
           estado: "BORRADOR",
+          plantillaDisenoId,
           configuracionDiseno: {},
         }),
       });
@@ -182,6 +210,46 @@ export default function CrearEventoPage() {
             <label htmlFor="direccion" className="mt-3 block text-sm font-medium text-slate-800">Dirección</label>
             <input id="direccion" value={direccion} onChange={(event) => actualizarDireccion(event.target.value)} placeholder="Escribí la dirección o pegá coordenadas: -34.6037, -58.3816" className="mt-1 w-full rounded border border-slate-300 px-3 py-2" />
           </div>
+
+          <section className="md:col-span-2">
+            <div className="flex items-center gap-2">
+              <Palette size={18} className="text-slate-700" />
+              <div>
+                <h2 className="font-medium text-slate-900">Diseño de invitación</h2>
+                <p className="text-sm text-slate-600">Elegí el estilo que tendrá la invitación pública.</p>
+              </div>
+            </div>
+
+            {cargandoPlantillas && <p className="mt-4 text-sm text-slate-600">Cargando diseños...</p>}
+            {errorPlantillas && <p className="mt-4 text-sm text-red-700">{errorPlantillas}</p>}
+            {!cargandoPlantillas && !errorPlantillas && plantillas.length === 0 && <p className="mt-4 text-sm text-slate-600">No hay diseños disponibles todavía.</p>}
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {plantillas.map((plantilla) => {
+                const seleccionada = plantilla.id === plantillaDisenoId;
+                const colorPrimario = plantilla.colorPrimario ?? "#1E293B";
+                const colorSecundario = plantilla.colorSecundario ?? "#F8FAFC";
+
+                return (
+                  <button
+                    key={plantilla.id}
+                    type="button"
+                    onClick={() => setPlantillaDisenoId(plantilla.id)}
+                    aria-pressed={seleccionada}
+                    className={`relative overflow-hidden rounded-lg border p-3 text-left transition ${seleccionada ? "border-slate-900 ring-2 ring-slate-900/20" : "border-slate-200 hover:border-slate-400"}`}
+                  >
+                    <div className="flex h-20 items-end rounded-md p-3" style={{ background: `linear-gradient(135deg, ${colorPrimario}, ${colorSecundario})` }}>
+                      <span className="rounded bg-white/85 px-2 py-1 text-xs font-semibold text-slate-800">{plantilla.nombre}</span>
+                    </div>
+                    <p className="mt-3 font-medium text-slate-900">{plantilla.nombre}</p>
+                    <p className="mt-1 min-h-10 text-xs leading-5 text-slate-600">{plantilla.descripcion}</p>
+                    <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-600"><Sparkles size={14} /> {plantilla.tipoAnimacion ?? "Sin animación"}</p>
+                    {seleccionada && <span className="absolute right-5 top-5 rounded-full bg-slate-900 p-1 text-white"><Check size={14} strokeWidth={3} /></span>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           {error && <p className="text-sm text-red-700 md:col-span-2">{error}</p>}
           <button type="submit" disabled={enviando} className="w-full rounded bg-slate-900 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2">
