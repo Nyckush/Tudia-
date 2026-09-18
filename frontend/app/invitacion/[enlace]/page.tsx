@@ -34,9 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!evento) return { title: "Invitación" };
 
   const titulo = `Invitación de ${evento.nombreCumpleanero}`;
-  const imagen = evento.imagenPortadaUrl
-    ? urlPublica(evento.imagenPortadaUrl)
-    : undefined;
+  const imagen = urlPublica(`/invitacion/${enlace}/opengraph-image`);
 
   return {
     metadataBase: new URL(APP_URL),
@@ -47,13 +45,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: "",
       url: urlPublica(`/invitacion/${enlace}`),
       type: "website",
-      images: imagen ? [{ url: imagen }] : [],
+      images: [{ url: imagen, width: 1200, height: 630, alt: `Invitación de ${evento.nombreCumpleanero}` }],
     },
     twitter: {
-      card: imagen ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: titulo,
       description: null,
-      images: imagen ? [imagen] : [],
+      images: [imagen],
     },
   };
 }
