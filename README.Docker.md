@@ -72,6 +72,7 @@ En **Build Time Arguments** agregá:
 ```text
 BACKEND_URL=http://HOST_INTERNO_BACKEND:8080
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=tu_clave
+NEXT_PUBLIC_APP_URL=https://tu-dominio-publico
 ```
 
-`BACKEND_URL` se requiere al compilar el frontend; si falta, la compilación se detiene con un error claro. Para identificar el host interno del backend, abrí su configuración avanzada en Dokploy y consultá la URL interna que aparece en la configuración de Traefik.
+`BACKEND_URL` se requiere al compilar el frontend; si falta, la compilación se detiene con un error claro. `NEXT_PUBLIC_APP_URL` debe ser el dominio público final del frontend, porque se utiliza en la imagen de vista previa que WhatsApp lee. Para identificar el host interno del backend, abrí su configuración avanzada en Dokploy y consultá la URL interna que aparece en la configuración de Traefik.

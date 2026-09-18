@@ -59,7 +59,7 @@ export function NavbarPrivado({ children }: NavbarPrivadoProps) {
             aria-label="tuDía: ir a mis eventos"
           >
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="tuDía"
               width={144}
               height={58}

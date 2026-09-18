@@ -42,11 +42,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat sm:px-4 sm:py-8" style={{ backgroundImage: "url('/fondo.jpg')" }}>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat sm:px-4 sm:py-8" style={{ backgroundImage: "url('/fondo.webp')" }}>
       <div aria-hidden className="absolute inset-0 bg-white/20" />
       <form onSubmit={iniciarSesion} className="relative z-10 w-full border border-white/95 bg-white/90 p-6 shadow-[0_24px_65px_rgba(71,85,105,.28),0_8px_22px_rgba(15,23,42,.16)] ring-1 ring-slate-300/45 backdrop-blur-sm sm:max-w-sm sm:rounded-3xl sm:p-8 sm:shadow-[0_32px_80px_rgba(71,85,105,.32),0_12px_30px_rgba(15,23,42,.18)]">
         <div className="flex flex-col items-center text-center">
-          <Image src="/logo2.png" alt="tuDía" width={112} height={112} priority className="size-24 object-contain sm:size-28" />
+          <Image src="/logo2.webp" alt="tuDía" width={112} height={112} priority className="size-24 object-contain sm:size-28" />
           <h1 className="mt-5 text-2xl font-semibold text-slate-900">Iniciar sesión</h1>
           <p className="mt-1 text-sm text-slate-600">Usá tu nombre de usuario y contraseña.</p>
         </div>

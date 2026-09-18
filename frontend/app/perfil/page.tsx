@@ -5,6 +5,7 @@ import { AtSign, Camera, Check, LoaderCircle, Mail, Pencil, Trash2, UserRound, X
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { NavbarPrivado } from "../components/NavbarPrivado";
+import { esImagenPermitida, optimizarImagen, TAMANO_MAXIMO_ORIGINAL_BYTES, TAMANO_MAXIMO_SUBIDA_BYTES, TIPO_GIF } from "../lib/imagenes";
 
 const API_URL = "/api/backend";
 type CampoEditable = "nombre" | "username" | "correo";
@@ -74,15 +75,21 @@ export default function PerfilPage() {
   async function subirFoto(event: ChangeEvent<HTMLInputElement>) {
     const archivo = event.target.files?.[0];
     if (!archivo || !usuario) return;
-    if (!archivo.type.match(/^image\/(jpeg|png|webp|gif)$/) || archivo.size > 5 * 1024 * 1024) {
-      setError("Elegí una imagen JPG, PNG, WEBP o GIF de hasta 5 MB.");
+    if (!esImagenPermitida(archivo)) {
+      setError("Elegí una imagen JPG, PNG, WEBP o GIF.");
+      return;
+    }
+    if (archivo.size > (archivo.type === TIPO_GIF ? TAMANO_MAXIMO_SUBIDA_BYTES : TAMANO_MAXIMO_ORIGINAL_BYTES)) {
+      setError(archivo.type === TIPO_GIF ? "El GIF no puede superar 5 MB." : "La imagen original no puede superar 20 MB.");
       return;
     }
     setSubiendoFoto(true);
     setError("");
     try {
+      const imagenOptimizada = await optimizarImagen(archivo, 512);
+      if (imagenOptimizada.size > TAMANO_MAXIMO_SUBIDA_BYTES) throw new Error("La imagen optimizada supera 5 MB. Elegí una imagen con menos detalle.");
       const datos = new FormData();
-      datos.append("archivo", archivo);
+      datos.append("archivo", imagenOptimizada);
       const respuestaArchivo = await fetch(`${API_URL}/api/archivos/perfiles`, { method: "POST", body: datos });
       const archivoSubido = await respuestaArchivo.json().catch(() => null) as { url?: string; mensaje?: string } | null;
       if (!respuestaArchivo.ok || !archivoSubido?.url) throw new Error(archivoSubido?.mensaje ?? "No pudimos subir la foto.");

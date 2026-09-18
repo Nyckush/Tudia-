@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { CalendarDays, Check, MailOpen, MapPin, Palette, Sparkles, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { NavbarPrivado } from "../../../components/NavbarPrivado";
+import { esImagenPermitida, optimizarImagen, TAMANO_MAXIMO_ORIGINAL_BYTES, TAMANO_MAXIMO_SUBIDA_BYTES, TIPO_GIF } from "../../../lib/imagenes";
 
 const API_URL = "/api/backend";
 
@@ -101,12 +102,32 @@ export default function EditarInvitacionPage() {
     }
   }
 
-  function seleccionarImagenPortada(archivo: File | undefined) {
+  async function seleccionarImagenPortada(archivo: File | undefined) {
     if (!archivo) return;
+    if (!esImagenPermitida(archivo)) {
+      setError("Elegí una imagen JPG, PNG, WEBP o GIF.");
+      return;
+    }
+    if (archivo.size > (archivo.type === TIPO_GIF ? TAMANO_MAXIMO_SUBIDA_BYTES : TAMANO_MAXIMO_ORIGINAL_BYTES)) {
+      setError(archivo.type === TIPO_GIF ? "El GIF no puede superar 5 MB." : "La imagen original no puede superar 20 MB.");
+      return;
+    }
+    setError("");
+    let imagenOptimizada: File;
+    try {
+      imagenOptimizada = await optimizarImagen(archivo, 1920);
+    } catch (causa) {
+      setError(causa instanceof Error ? causa.message : "No pudimos optimizar la imagen.");
+      return;
+    }
+    if (imagenOptimizada.size > TAMANO_MAXIMO_SUBIDA_BYTES) {
+      setError("La imagen optimizada supera 5 MB. Elegí una imagen con menos detalle.");
+      return;
+    }
     if (vistaPreviaTemporal.current) URL.revokeObjectURL(vistaPreviaTemporal.current);
-    const vistaTemporal = URL.createObjectURL(archivo);
+    const vistaTemporal = URL.createObjectURL(imagenOptimizada);
     vistaPreviaTemporal.current = vistaTemporal;
-    setArchivoPortada(archivo);
+    setArchivoPortada(imagenOptimizada);
     setImagenPortadaUrl(vistaTemporal);
   }
 
@@ -140,8 +161,8 @@ export default function EditarInvitacionPage() {
           <SelectorColor etiqueta="Color principal" valor={colorPrimario} alCambiar={setColorPrimario} />
           <SelectorColor etiqueta="Color secundario" valor={colorSecundario} alCambiar={setColorSecundario} />
         </div>
-        <label className="mt-5 block text-sm font-medium text-slate-800">Imagen de portada<input ref={entradaArchivoPortada} onChange={(event) => seleccionarImagenPortada(event.target.files?.[0])} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="mt-1 block w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200" /></label>
-        {archivoPortada && <p className="mt-2 text-xs text-slate-600">Imagen seleccionada: {archivoPortada.name}. Se subirá al guardar.</p>}
+        <label className="mt-5 block text-sm font-medium text-slate-800">Imagen de portada<input ref={entradaArchivoPortada} onChange={(event) => void seleccionarImagenPortada(event.target.files?.[0])} accept="image/jpeg,image/png,image/webp,image/gif" type="file" className="mt-1 block w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200" /></label>
+        {archivoPortada && <p className="mt-2 text-xs text-slate-600">Imagen seleccionada: {archivoPortada.name}. Se subirá al guardar{archivoPortada.type === TIPO_GIF ? " sin cambios" : " en formato WebP"}.</p>}
         {imagenPortadaUrl.startsWith("/uploads/") && <p className="mt-3 text-xs font-medium text-emerald-700">Imagen local guardada.</p>}
         <label className="mt-4 block text-sm font-medium text-slate-800">O usá una URL externa (opcional)<input value={imagenPortadaUrl.startsWith("blob:") || imagenPortadaUrl.startsWith("/uploads/") ? "" : imagenPortadaUrl} onChange={(event) => cambiarUrlPortada(event.target.value)} type="url" placeholder="https://..." className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500" /></label>
         {imagenPortadaUrl && <button type="button" onClick={quitarImagenPortada} className="mt-3 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50">Quitar imagen de portada</button>}
