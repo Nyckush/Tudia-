@@ -6,10 +6,10 @@ COPY package.json package-lock.json ./
 # su árbol compatible con Linux, conservando el package-lock como referencia.
 RUN npm install --include=optional --no-audit --no-fund
 COPY . .
-ARG BACKEND_URL=http://backend:8080
+ARG BACKEND_URL
 ENV BACKEND_URL=$BACKEND_URL
 ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-RUN npm run build
+RUN test -n "$BACKEND_URL" && npm run build
 EXPOSE 3000
 CMD ["npm", "run", "start"]

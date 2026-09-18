@@ -1,2 +1,3 @@
-.env.docker.example
-README.Docker.md
+.env
+.env.*
+!.env.docker.example
